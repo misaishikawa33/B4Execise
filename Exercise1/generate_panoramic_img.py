@@ -71,7 +71,7 @@ def generate_panoramic_img(img1, img2, M, min_points, max_points):
             x, y, w = np.dot(M_inv, dst_pixel)
             src_pixel = np.array([x/w, y/w]).astype(np.int32)
             # print(type(dst_pixel[0]))
-            if(0 < src_pixel[0] < img2.shape[0] and 0 < src_pixel[1] < img2.shape[1]):
+            if(0 <= src_pixel[0] < img2.shape[1] and 0 <= src_pixel[1] < img2.shape[0]):
                 new_img[i + offset_y][j + offset_x] = img2[src_pixel[1]][src_pixel[0]]
 
     cv2.imwrite('homography.jpg',new_img)
@@ -86,6 +86,12 @@ img1 = cv2.imread(img_name1)
 # 画像を読み込み
 img_name2 = input("画像のファイル名を入力：")
 img2 = cv2.imread(img_name2)
+
+# img1 = cv2.imread("/home/misa/katuda/B4Execise/Exercise1/source.jpg")
+# img2 = cv2.imread("/home/misa/katuda/B4Execise/Exercise1/target.jpg")
+
+
+
 # 画像２の対応点を入力
 src_points = get_points(img2)
 # 画像１の対応点を入力

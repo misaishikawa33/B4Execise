@@ -2,7 +2,7 @@
 
 import cv2
 # 縮小率
-SCALE = 1
+SCALE = 5
 # 座標の配列
 points = []
 
