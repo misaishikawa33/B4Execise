@@ -11,35 +11,38 @@ from compute_homography_matrix import compute_homography_matrix
 from get_points import get_points
 from mark_points import mark_points
 
-# 変換後の左上、右下の点を取得し,生成画像の高さ，幅を求める
-def get_new_img_size(M, img2):
-    # 画像２のサイズを取得
-    height = img2.shape[0]
-    width = img2.shape[1]
-    # 左上と右下の初期値を設定
-    min_x = 0
-    min_y = 0
-    max_x = width
-    max_y = height
+def get_new_img_size(M, img1, img2):
+    # 画像1と画像2のサイズを取得
+    height1, width1 = img1.shape[:2]
+    height2, width2 = img2.shape[:2]
 
-    for i in range(height):
-        for j in range(width):
-            src_pixel = np.array([j, i, 1])
-            x, y, w = np.dot(M, src_pixel)
-            dst_pixel = np.array([x/w, y/w]).astype(np.int32)
-            # 左上の点を取得
-            if(min_x > dst_pixel[0]):
-                min_x = dst_pixel[0]
-            if(min_y > dst_pixel[1]):
-                min_y = dst_pixel[1]
-            # 右下の点を取得
-            if(max_x < dst_pixel[0]):
-                max_x = dst_pixel[0]
-            if(max_y < dst_pixel[1]):
-                max_y = dst_pixel[1]
-    
-    print('min_points  ' , [min_x, min_y])
-    print('max_points  ' , [max_x, max_y])
+    # 画像1の四隅の点
+    corners_img1 = np.array([
+        [0, 0, 1],          # 左上
+        [width1, 0, 1],     # 右上
+        [0, height1, 1],    # 左下
+        [width1, height1, 1]  # 右下
+    ])
+
+    # 画像2の四隅の点を射影変換
+    corners_img2 = np.array([
+        [0, 0, 1],          # 左上
+        [width2, 0, 1],     # 右上
+        [0, height2, 1],    # 左下
+        [width2, height2, 1]  # 右下
+    ])
+    transformed_corners_img2 = np.dot(M, corners_img2.T).T
+    transformed_corners_img2 /= transformed_corners_img2[:, 2][:, np.newaxis]  # 正規化
+
+    # すべての点（画像1の四隅 + 変換された画像2の四隅）をまとめる
+    all_corners = np.vstack((corners_img1[:, :2], transformed_corners_img2[:, :2]))
+
+    # 新しい範囲を計算
+    min_x, min_y = all_corners.min(axis=0).astype(int)
+    max_x, max_y = all_corners.max(axis=0).astype(int)
+
+    print('min_points  ', [min_x, min_y])
+    print('max_points  ', [max_x, max_y])
 
     return [min_x, min_y], [max_x, max_y]
 
@@ -99,7 +102,7 @@ dst_points = get_points(img1)
 # 射影変換行列の計算
 M = compute_homography_matrix(src_points,dst_points)
 # 変換後の左上、右下の点を取得する
-min_points, max_points = get_new_img_size(M, img2)
+min_points, max_points = get_new_img_size(M, img1, img2)
 # パノラマ画像を生成
 generate_panoramic_img(img1, img2, M, min_points, max_points)
 
